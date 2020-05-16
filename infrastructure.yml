@@ -1,33 +1,37 @@
-Description: 
-
+Description: >
+  Udagram, Udacity Cloud DevOps Nanodegree Project 2: CloudFormation
+  by Michael Olatunji
 
 Parameters:
-  
+  EnvironmentName:
+    Description: An Environment name that will prefixed to resources
+    Type: String
+  VpcCIDR:
+    Description: IP range CIDR for this resource
+    Type: String
 
 Resources:
 
   VPC: 
-        Type: AWS::EC2::VPC
-        Properties:
-            CidrBlock: !Ref VpcCIDR
-            EnableDnsHostnames: true
-            Tags: 
-                - Key: Name 
-                  Value: !Ref EnvironmentName
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsHostnames: true
+      Tags: 
+        - Key: Name 
+          Value: !Ref EnvironmentName
 
-  ProfileWithRolesForOurApp:
-    Type: AWS::IAM::InstanceProfile
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
     Properties: 
-      Roles:
-        - UdacityS3ReadOnlyEC2
-  
-          #!/bin/bash
-          apt-get update -y
-          apt-get install unzip awscli -y
-          apt-get install apache2 -y
-          systemctl start apache2.service
-          cd /var/www/html
-          aws s3 cp s3://udacity-demo-1/udacity.zip .
-          unzip -o udacity.zip
-
+      Tags:
+        - Key: Name
+          Value: !Ref EnvironmentName
+          
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+      
 Outputs:
