@@ -10,51 +10,10 @@ Parameters:
     Type: String
 
 Resources:
-
-  LBSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-      Properties:
-        GroupDescription: Allow http to our load balancer
-        VpcId:
-          Fn::ImportValue:
-            !Sub "${EnvironmentName}-VPCID"
-        SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-        SecurityGroupEgress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-
-  WebServerSecGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Allow http to our hosts and SSH from local only
-      VpcId:
-        Fn::ImportValue:
-          !Sub "${EnvironmentName}-VPCID"
-      SecurityGroupIngress:
-      - IpProtocol: tcp
-        FromPort: 8080
-        ToPort: 8080
-        CidrIp: 0.0.0.0/0
-      - IpProtocol: tcp
-        FromPort: 22
-        ToPort: 22
-        CidrIp: 0.0.0.0/0
-      SecurityGroupEgress:
-      - IpProtocol: tcp
-        FromPort: 0
-        ToPort: 65535
-        CidrIp: 0.0.0.0/0
-
   UdagramRole:
     Type: 'AWS::IAM::Role'
-    Properties: Creates an IAM Role for Udagram with read-only access to S3 bucket
-      Description: 
+    Properties: 
+      Description: Creates an IAM Role for Udagram with read-only access to S3 bucket
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -80,13 +39,80 @@ Resources:
       Roles: 
         - !Ref UdagramRole
 
-  UdagramInstanceProfileRole:
+  UdagramInstanceProfile:
     Type: 'AWS::IAM::InstanceProfile'
     Properties:
-      Path: /
       Roles:
         - !Ref UdagramRole
-  
-          
+
+  LBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow http to our load balancer
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${EnvironmentName}-VPCID"
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+
+  WebServerSecGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow http to our hosts and SSH from local only
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${EnvironmentName}-VPCID"
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 8080
+        ToPort: 8080
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+      - IpProtocol: tcp
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 0.0.0.0/0
+
+  WebAppLaunchConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          apt-get update -y
+          apt-get install unzip awscli -y
+          apt-get install apache2 -y
+          systemctl start apache2.service
+          cd /var/www/html
+          aws s3 cp s3://udagram-imyke/udacity.zip .
+          unzip -o udacity.zip
+
+      ImageId: ami-003634241a8fcdec0
+      SecurityGroups:
+        - Ref: WebServerSecGroup
+      InstanceType: t3.medium
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sdk"
+          Ebs:
+            VolumeSize: '10'
+      IamInstanceProfile:
+        Ref: UdagramInstanceProfile
 
 Outputs:
+  PolicyId:
+    Description: The logical ID of the IAM policy
+    Value: !Ref UdagramRolePolicies
+
+    
