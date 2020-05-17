@@ -108,6 +108,8 @@ Resources:
       UserDate:
         Fn::Base64: !Sub |
           #!/bin/bash
+          LOG_LOCATION="/var/log"   
+          exec >> $LOG_LOCATION/cloud-init-output.log 2>&1
           apt-get update -y
           apt-get install unzip awscli -y
           apt-get install apache2 -y
@@ -115,6 +117,8 @@ Resources:
           cd /var/www/html
           aws s3 cp s3://${BastionS3}/${BastionKeySSH}.pem /home/ubuntu
           chmod 400 ${BastionKeySSH}.pem
+
+           
 
   EIP1:
     Type: AWS::EC2::EIP
@@ -161,6 +165,8 @@ Resources:
       UserDate:
         Fn::Base64: !Sub |
           #!/bin/bash
+          LOG_LOCATION="/var/log"   
+          exec >> $LOG_LOCATION/cloud-init-output.log 2>&1
           apt-get update -y
           apt-get install unzip awscli -y
           apt-get install apache2 -y

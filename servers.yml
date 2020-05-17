@@ -94,6 +94,8 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
+          LOG_LOCATION="/var/log"   
+          exec >> $LOG_LOCATION/cloud-init-output.log 2>&1
           apt-get update -y
           apt-get install unzip awscli -y
           apt-get install apache2 -y
