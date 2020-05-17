@@ -2,5 +2,17 @@
     {
         "ParameterKey": "EnvironmentName",
         "ParameterValue": "Udagram"
+    },
+    {
+        "ParameterKey": "BastionS3",
+        "ParameterValue": "udagram_imyke"
+    },
+    {
+        "ParameterKey": "BastionKeySSH",
+        "ParameterValue": "udagram-key"
+    },
+    {
+        "ParameterKey": "SourceIP",
+        "ParameterValue": "197.211.61.33/32"
     }
 ]
