@@ -5,6 +5,7 @@ Parameters:
 
 
 Resources:
+  
   ProfileWithRolesForOurApp:
     Type: AWS::IAM::InstanceProfile
     Properties: 
