@@ -51,19 +51,42 @@ Resources:
         ToPort: 65535
         CidrIp: 0.0.0.0/0
 
-  ProfileWithRolesForOurApp:
-    Type: AWS::IAM::InstanceProfile
+  UdagramRole:
+    Type: 'AWS::IAM::Role'
+    Properties: Creates an IAM Role for Udagram with read-only access to S3 bucket
+      Description: 
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      
+  UdagramRolePolicies: 
+    Type: "AWS::IAM::Policy"
     Properties: 
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: 'arn:aws:s3:::udagram-imyke/*'
+      Roles: 
+        - !Ref UdagramRole
+
+  UdagramInstanceProfileRole:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: /
       Roles:
-        - UdacityS3ReadOnlyEC2
+        - !Ref UdagramRole
   
-          #!/bin/bash
-          apt-get update -y
-          apt-get install unzip awscli -y
-          apt-get install apache2 -y
-          systemctl start apache2.service
-          cd /var/www/html
-          aws s3 cp s3://udacity-demo-1/udacity.zip .
-          unzip -o udacity.zip
+          
 
 Outputs:
