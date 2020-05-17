@@ -1,10 +1,12 @@
 Description: >
-  Udagram, Udacity Cloud DevOps Nanodegree Project 2: CloudFormation
-  by Michael Olatunji
+  Michael Olatunji / Udagram, 
+  Udacity Cloud DevOps Nanodegree Project 2
+  Cloudformation Infrastructure as Code
+  The Infrastructure hardware
 
 Parameters:
   EnvironmentName:
-    Description: An Environment name that will prefixed to resources
+    Description: An Environment name that will prefixed to resources names
     Type: String
 
   VpcCIDR:
