@@ -1,0 +1,46 @@
+Description: >
+  Michael Olatunji / Udagram, 
+  Udacity Cloud DevOps Nanodegree Project 2
+  Cloudformation Infrastructure as Code
+  S3 Bucket
+
+Parameters:
+  EnvironmentName:
+    Description: An Environment name that will prefixed to resources names
+    Type: String
+
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: udagram_imyke
+
+  BucketPolicy: 
+    Type: AWS::S3::BucketPolicy
+    Properties: 
+      Bucket: 
+        Ref: S3Bucket
+      PolicyDocument: 
+        Statement: 
+          - Action: 
+              - "s3:GetObject"
+            Effect: "Allow"
+            Resource: 
+              Fn::Join: 
+                - ""
+                - 
+                  - "arn:aws:s3:::"
+                  - Ref: S3Bucket
+                  - "/*"
+            Principal: "*"
+
+Outputs:
+  BucketName:
+    Description: Name of the S3 Bucket.
+    Value: !Ref S3Bucket
+  
+  BucketUrl:
+    Description: URL to udagram zip file in the s3 bucket.
+    Value: !Join ["", ["https://s3.amazonaws.com/", !GetAtt S3Bucket.Arn, "/udagram.zip"]]
+  

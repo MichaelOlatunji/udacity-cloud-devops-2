@@ -2,8 +2,8 @@ Description: >
   Michael Olatunji / Udagram, 
   Udacity Cloud DevOps Nanodegree Project 2
   Cloudformation Infrastructure as Code
-  The compute hardware (servers)
-  
+  IAM Role
+
 Parameters:
   EnvironmentName:
     Description: An Environment name that will prefixed to resources names
@@ -48,6 +48,11 @@ Resources:
 Outputs:
   PolicyId:
     Description: The logical ID of the IAM policy
-    Value: !Ref UdagramRolePolicies
+    Value: !Ref UdagramInstanceProfile
     Export:
-      Name: !sub ${EnvironmentName}-IAM-POLICY
+      Name: !Sub ${EnvironmentName}-IAM-NAME
+  Role:
+    Description: IAM to allow ec2 instances to manage web app in s3
+    Value: !GetAtt UdagramRole.Arn
+    Export:
+      Name: !Sub ${EnvironmentName}-IAM-ARN
