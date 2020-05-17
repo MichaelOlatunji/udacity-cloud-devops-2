@@ -1,0 +1,127 @@
+Description: >
+  Michael Olatunji / Udagram, 
+  Udacity Cloud DevOps Nanodegree Project 2
+  Cloudformation Infrastructure as Code
+  EC2 Instance: Bastion Host
+  IAM Role
+
+Parameters:
+  EnvironmentName:
+    Description: An Environment name that will prefixed to resources names
+    Type: String
+
+  BastionS3SSH:
+    Description: Bucket which ssh key is hosted
+    Type: String
+    Default: udagram-key
+
+  BastionKeySSH:
+    Description: KeyName to access bastion host
+    Type: "AWS::EC2::KeyPair::KeyName"
+    Default: udagram
+
+Resources:
+
+  BastionHostSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: allow connections from specified source security group
+      VpcId:
+          Fn::ImportValue:
+            !Sub "${EnvironmentName}-VPCID"
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+      - IpProtocol: tcp
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 0.0.0.0/0
+
+  UdagramRole:
+    Type: 'AWS::IAM::Role'
+    Properties: 
+      Description: Creates an IAM Role for Udagram with read-only access to S3 bucket
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      
+  UdagramRolePolicies: 
+    Type: "AWS::IAM::Policy"
+    Properties: 
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: 'arn:aws:s3:::udagram-imyke/*'
+      Roles: 
+        - !Ref UdagramRole
+
+  UdagramInstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Roles:
+        - !Ref UdagramRole
+
+  Ec2Instance: 
+    Type: AWS::EC2::Instance
+    Properties: 
+      ImageId: ami-003634241a8fcdec0 #ami-0d6621c01e8c2de2c
+      KeyName: 
+        Ref: "KeyName"
+      InstanceType: t3.small
+      NetworkInterfaces: 
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+      SecurityGroups:
+        - !Ref BastionHostSecurityGroup
+      SubnetId: 
+        - Fn::ImportValue: !Sub "${EnvironmentName}-PUB1-SN"
+        - Fn::ImportValue: !Sub "${EnvironmentName}-PUB2-SN"
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sdk"
+          Ebs:
+            VolumeSize: '10'
+      IamInstanceProfile:
+        Ref: UdagramInstanceProfile
+      Tags:
+        - Key: Name
+          Value: Bastion Host
+
+      UserDate:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          apt-get update -y
+          apt-get install unzip awscli -y
+          apt-get install apache2 -y
+          systemctl start apache2.service
+          cd /var/www/html
+          aws s3 cp s3://${S3BastionSSH}/${KeyBastionSSH}.pem /home/ubuntu
+          chmod 400 ${KeyBastionSSH}.pem
+
+
+Outputs:
+  PolicyId:
+    Description: The logical ID of the EC2 IAM policy
+    Value: !Ref UdagramInstanceProfile
+    Export:
+      Name: !Sub ${EnvironmentName}-IAM-NAME
+  Role:
+    Description: IAM to allow ec2 instances to manage web app in s3
+    Value: !GetAtt UdagramRole.Arn
+    Export:
+      Name: !Sub ${EnvironmentName}-IAM-ARN
+  
+  

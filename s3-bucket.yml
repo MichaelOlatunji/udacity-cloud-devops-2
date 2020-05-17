@@ -39,8 +39,11 @@ Outputs:
   BucketName:
     Description: Name of the S3 Bucket.
     Value: !Ref S3Bucket
-  
+    Export:
+      Name: !Sub ${EnvironmentName}-S3_BUCKET-NAME
+
   BucketUrl:
     Description: URL to udagram zip file in the s3 bucket.
     Value: !Join ["", ["https://s3.amazonaws.com/", !GetAtt S3Bucket.Arn, "/udagram.zip"]]
-  
+    Export:
+      Name: !Sub ${EnvironmentName}-S3-BUCKET-URL

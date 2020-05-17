@@ -3,6 +3,7 @@ Description: >
   Udacity Cloud DevOps Nanodegree Project 2
   Cloudformation Infrastructure as Code
   The compute hardware (servers)
+  IAM Role
 
 Parameters:
   EnvironmentName:
@@ -51,6 +52,41 @@ Resources:
         FromPort: 0
         ToPort: 65535
         CidrIp: 0.0.0.0/0
+
+  UdagramRole:
+    Type: 'AWS::IAM::Role'
+    Properties: 
+      Description: Creates an IAM Role for Udagram with read-only access to S3 bucket
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      
+  UdagramRolePolicies: 
+    Type: "AWS::IAM::Policy"
+    Properties: 
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: 'arn:aws:s3:::udagram-imyke/*'
+      Roles: 
+        - !Ref UdagramRole
+
+  UdagramInstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Roles:
+        - !Ref UdagramRole
 
   WebAppLaunchConfig:
     Type: AWS::AutoScaling::LaunchConfiguration
@@ -144,5 +180,17 @@ Outputs:
     Value: !Join ["", ["http://", !GetAtt WebAppLB.DNSName,]]
     Export:
       Name: !Sub ${EnvironmentName}-DNS-LB-NAME
+
+  PolicyId:
+    Description: The logical ID of the IAM policy
+    Value: !Ref UdagramInstanceProfile
+    Export:
+      Name: !Sub ${EnvironmentName}-IAM-NAME
+
+  Role:
+    Description: IAM to allow autoscaling group ec2 instances to manage web app in s3
+    Value: !GetAtt UdagramRole.Arn
+    Export:
+      Name: !Sub ${EnvironmentName}-IAM-ARN
 
     
