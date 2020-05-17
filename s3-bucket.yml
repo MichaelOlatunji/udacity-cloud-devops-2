@@ -14,7 +14,7 @@ Resources:
     Type: AWS::S3::Bucket
     DeletionPolicy: Delete
     Properties:
-      BucketName: udagram_imyke
+      BucketName: udagram-imyke
 
   BucketPolicy: 
     Type: AWS::S3::BucketPolicy
@@ -40,7 +40,7 @@ Outputs:
     Description: Name of the S3 Bucket.
     Value: !Ref S3Bucket
     Export:
-      Name: !Sub ${EnvironmentName}-S3_BUCKET-NAME
+      Name: !Sub ${EnvironmentName}-S3-BUCKET-NAME
 
   BucketUrl:
     Description: URL to udagram zip file in the s3 bucket.

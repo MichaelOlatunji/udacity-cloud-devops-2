@@ -3,7 +3,7 @@ Description: >
   Udacity Cloud DevOps Nanodegree Project 2
   Cloudformation Infrastructure as Code
   The compute hardware (servers)
-  IAM Role
+  Udagram IAM Role
 
 Parameters:
   EnvironmentName:
@@ -11,8 +11,6 @@ Parameters:
     Type: String
 
 Resources:
-  
-
   LBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -70,15 +68,14 @@ Resources:
   UdagramRolePolicies: 
     Type: "AWS::IAM::Policy"
     Properties: 
-      Policies:
-        - PolicyName: root
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:GetObject
-                Resource: 'arn:aws:s3:::udagram-imyke/*'
+      PolicyName: root
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:GetObject
+            Resource: 'arn:aws:s3:::udagram-imyke/*'
       Roles: 
         - !Ref UdagramRole
 
@@ -135,7 +132,7 @@ Resources:
       - Fn::ImportValue: !Sub "${EnvironmentName}-PUB1-SN"
       - Fn::ImportValue: !Sub "${EnvironmentName}-PUB2-SN"
       SecurityGroups:
-      - Ref: LBSecGroup
+      - Ref: LBSecurityGroup
 
   Listener:
     Type: AWS::ElasticLoadBalancingV2::Listener

@@ -13,7 +13,7 @@ Parameters:
   BastionS3:
     Description: Bucket which ssh key is hosted
     Type: String
-    Default: udagram_imyke
+    Default: udagram-imyke
 
   BastionKeySSH:
     Description: KeyName to access bastion host
@@ -28,7 +28,7 @@ Parameters:
 
 Resources:
 
-  BastionHostSecurityGroup:
+  BastionSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: allow connections from specified source security group
@@ -63,49 +63,47 @@ Resources:
   UdagramRolePolicies: 
     Type: "AWS::IAM::Policy"
     Properties: 
-      Policies:
-        - PolicyName: root
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:GetObject
-                Resource: 'arn:aws:s3:::udagram-imyke/*'
+      PolicyName: bastion-policy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:GetObject
+            Resource: 'arn:aws:s3:::udagram-imyke/*'
       Roles: 
         - !Ref UdagramRole
 
-  UdagramInstanceProfile:
+  BastionIamInstanceProfile:
     Type: 'AWS::IAM::InstanceProfile'
     Properties:
       Roles:
         - !Ref UdagramRole
 
-  BastionEc2Instance1: 
+  BastionEc2Instance1:
     Type: AWS::EC2::Instance
+    DependsOn:
+      - BastionSecurityGroup
+      - BastionIamInstanceProfile
     Properties: 
-      ImageId: ami-003634241a8fcdec0 #ami-0d6621c01e8c2de2c
+      ImageId: ami-003634241a8fcdec0
       KeyName: !Ref BastionKeySSH
-      InstanceType: t3.small
-      NetworkInterfaces: 
-        - AssociatePublicIpAddress: "true"
-          DeviceIndex: "0"
-      SecurityGroups:
-        - !Ref BastionHostSecurityGroup
+      InstanceType: t3.medium
+      SecurityGroupIds:
+        - !Ref BastionSecurityGroup
       SubnetId: 
-        - Fn::ImportValue: !Sub "${EnvironmentName}-PUB1-SN"
-        - Fn::ImportValue: !Sub "${EnvironmentName}-PUB2-SN"
+        Fn::ImportValue: !Sub "${EnvironmentName}-PUB1-SN"
       BlockDeviceMappings:
         - DeviceName: "/dev/sdk"
           Ebs:
             VolumeSize: '10'
       IamInstanceProfile:
-        Ref: UdagramInstanceProfile
+        Ref: BastionIamInstanceProfile
       Tags:
         - Key: Name
           Value: Bastion Host 1
 
-      UserDate:
+      UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
           LOG_LOCATION="/var/log"   
@@ -117,8 +115,6 @@ Resources:
           cd /var/www/html
           aws s3 cp s3://${BastionS3}/${BastionKeySSH}.pem /home/ubuntu
           chmod 400 ${BastionKeySSH}.pem
-
-           
 
   EIP1:
     Type: AWS::EC2::EIP
@@ -141,28 +137,28 @@ Resources:
 
   BastionEc2Instance2: 
     Type: AWS::EC2::Instance
+    DependsOn:
+      - BastionSecurityGroup
+      - BastionIamInstanceProfile
     Properties: 
-      ImageId: ami-003634241a8fcdec0 #ami-0d6621c01e8c2de2c
+      ImageId: ami-003634241a8fcdec0
       KeyName: !Ref BastionKeySSH
       InstanceType: t3.small
-      NetworkInterfaces: 
-        - AssociatePublicIpAddress: "true"
-          DeviceIndex: "0"
-      SecurityGroups:
-        - !Ref BastionHostSecurityGroup
+      SecurityGroupIds:
+        - !Ref BastionSecurityGroup
       SubnetId: 
-        - Fn::ImportValue: !Sub "${EnvironmentName}-PUB2-SN"
+        Fn::ImportValue: !Sub "${EnvironmentName}-PUB2-SN"
       BlockDeviceMappings:
         - DeviceName: "/dev/sdk"
           Ebs:
             VolumeSize: '10'
       IamInstanceProfile:
-        Ref: UdagramInstanceProfile
+        Ref: BastionIamInstanceProfile
       Tags:
         - Key: Name
           Value: Bastion Host 2
 
-      UserDate:
+      UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
           LOG_LOCATION="/var/log"   
@@ -197,15 +193,15 @@ Resources:
 Outputs:
   PolicyId:
     Description: The logical ID of the EC2 IAM policy
-    Value: !Ref UdagramInstanceProfile
+    Value: !Ref BastionIamInstanceProfile
     Export:
-      Name: !Sub ${EnvironmentName}-IAM-NAME
+      Name: !Sub ${EnvironmentName}-BASTION-IAM-NAME
 
   Role:
     Description: IAM to allow ec2 instances to manage web app in s3
     Value: !GetAtt UdagramRole.Arn
     Export:
-      Name: !Sub ${EnvironmentName}-IAM-ARN
+      Name: !Sub ${EnvironmentName}-BASTION-IAM-ARN
 
   CIDRBastion1:
     Description: The CIDR of Bastion Host 0
@@ -215,7 +211,7 @@ Outputs:
 
   CIDRBastion2:
     Description: The CIDR to the Bastion Host 1
-    Value: !Join ["", [!GetAtt BastionEc2Instance1.PrivateIp, !Sub "/24"]]
+    Value: !Join ["", [!GetAtt BastionEc2Instance2.PrivateIp, !Sub "/24"]]
     Export:
       Name: !Sub ${EnvironmentName}-BASTION2-CIDR
 
