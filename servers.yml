@@ -108,7 +108,7 @@ Resources:
           sudo cp udagram/cp -a ./udagram/. .
 
       ImageId: ami-005bdb005fb00e791
-      KeyName: !Ref WebServerKeySSH
+      # KeyName: !Ref WebServerKeySSH
       SecurityGroups:
         - Ref: WebServerSecGroup
       InstanceType: t3.medium
