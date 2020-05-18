@@ -9,6 +9,11 @@ Parameters:
   EnvironmentName:
     Description: An Environment name that will prefixed to resources names
     Type: String
+    
+  WebServerKeySSH:
+    Description: KeyName to access host
+    Type: "AWS::EC2::KeyPair::KeyName"
+    Default: private-server-devops-key
 
 Resources:
   LBSecurityGroup:
@@ -38,8 +43,8 @@ Resources:
           !Sub "${EnvironmentName}-VPCID"
       SecurityGroupIngress:
       - IpProtocol: tcp
-        FromPort: 8080
-        ToPort: 8080
+        FromPort: 80
+        ToPort: 80
         CidrIp: 0.0.0.0/0
       - IpProtocol: tcp
         FromPort: 22
@@ -91,17 +96,19 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          LOG_LOCATION="/var/log"   
-          exec >> $LOG_LOCATION/cloud-init-output.log 2>&1
-          apt-get update -y
-          apt-get install unzip awscli -y
-          apt-get install apache2 -y
-          systemctl start apache2.service
+          sudo apt-get update -y
+          sudo apt-get install unzip awscli -y
+          sudo apt-get install apache2 -y
+          sudo systemctl start apache2.service
           cd /var/www/html
-          aws s3 cp s3://udagram-imyke/udacity.zip .
-          unzip -o udacity.zip
+          sudo aws s3 cp s3://udagram-imyke/udagram.zip .
+          sudo unzip -o udagram.zip
+          sudo systemctl restart apache2.service
+          sudo rm index.htm
+          sudo cp udagram/cp -a ./udagram/. .
 
-      ImageId: ami-003634241a8fcdec0
+      ImageId: ami-005bdb005fb00e791
+      KeyName: !Ref WebServerKeySSH
       SecurityGroups:
         - Ref: WebServerSecGroup
       InstanceType: t3.medium
@@ -161,7 +168,7 @@ Resources:
   WebAppTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      HealthCheckIntervalSeconds: 10
+      HealthCheckIntervalSeconds: 30
       HealthCheckPath: /
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 8
@@ -191,5 +198,3 @@ Outputs:
     Value: !GetAtt UdagramRole.Arn
     Export:
       Name: !Sub ${EnvironmentName}-IAM-ARN
-
-    

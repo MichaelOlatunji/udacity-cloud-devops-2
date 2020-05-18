@@ -2,5 +2,9 @@
     {
         "ParameterKey": "EnvironmentName",
         "ParameterValue": "Udagram"
+    },
+    {
+        "ParameterKey": "WebServerKeySSH",
+        "ParameterValue": "private-server-devops-key"
     }
 ]
